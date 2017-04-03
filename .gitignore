@@ -1,10 +1,4 @@
 /bin/
-*/
-!*/README.md
-!*/LICENSE
-!*/.project
-!*/.gitignore
-!*/.checkstyle
-!*/src/
-!*/.settings/
 /.classpath
+*.
+!*.gitignore
