@@ -1,1 +1,10 @@
 /bin/
+/.classpath.php
+*/
+!*/README.md
+!*/LICENSE
+!*/.project
+!*/.gitignore
+!*/.checkstyle
+!*/src/
+!*/.settings/
