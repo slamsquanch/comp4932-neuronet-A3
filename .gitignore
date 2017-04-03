@@ -1,5 +1,4 @@
 /bin/
-/.classpath.php
 */
 !*/README.md
 !*/LICENSE
@@ -8,3 +7,4 @@
 !*/.checkstyle
 !*/src/
 !*/.settings/
+/.classpath
