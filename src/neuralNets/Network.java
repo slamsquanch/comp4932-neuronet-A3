@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import neuralNets.DataLoader;
+import testMnist.TestMnistData;
 
 import cern.colt.function.*;
 import cern.colt.matrix.*;
@@ -254,14 +256,26 @@ public class Network {
 		//System.out.println("Weights[1] * biases[1]");
 		//System.out.println(getWeights(1).zMult(getBiases(1), null));
 		
+<<<<<<< HEAD
 		System.out.println(feedForward(DoubleFactory1D.dense.make(3, 0.5)));
 	}
 
 	public static void main(String[] args) {
 		int[] sizes = {3, 5, 4};
+=======
+		System.out.println(getWeights(1).zMult(getBiases(1), null));
+		
+	}
+
+	public static void main(String[] args) {
+		/*int[] sizes = {10, 10, 10};
+>>>>>>> df4f98cf7eec2fc61f00499d074004e3f6b4f14e
 		Network n = new Network(sizes);
 		
-		n.testMatrices();
+		n.testMatrices(); */
+		
+		DataLoader load = new DataLoader();
+		load.test();
 	}
 
 }
