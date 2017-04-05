@@ -1,5 +1,7 @@
 package neuralNets;
 import java.util.Random;
+import neuralNets.DataLoader;
+import testMnist.TestMnistData;
 
 import cern.colt.function.*;
 import cern.colt.matrix.*;
@@ -87,13 +89,17 @@ public class Network {
 		
 		
 		System.out.println(getWeights(1).zMult(getBiases(1), null));
+		
 	}
 
 	public static void main(String[] args) {
-		int[] sizes = {10, 10, 10};
+		/*int[] sizes = {10, 10, 10};
 		Network n = new Network(sizes);
 		
-		n.testMatrices();
+		n.testMatrices(); */
+		
+		DataLoader load = new DataLoader();
+		load.test();
 	}
 
 }
