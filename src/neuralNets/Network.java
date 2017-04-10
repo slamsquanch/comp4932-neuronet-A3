@@ -1,4 +1,6 @@
 package neuralNets;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +15,13 @@ import cern.jet.random.Normal;
 import cern.jet.random.engine.RandomEngine;
 
 public class Network {
+	
+	//public static final String DATA_PATH = "C:\\\\Users\\chach\\workspace\\comp4932-neuronet-A3\\Neuralnet_TestData\\";
+	public static final String DATA_PATH = "Neuralnet_TestData/";
+	public static final String TEST_IMAGE_FILE = "t10k-images.idx3-ubyte";
+	public static final String TEST_LABEL_FILE = "t10k-labels.idx1-ubyte";
+	public static final String TRAINING_IMAGE_FILE = "train-images.idx3-ubyte";
+	public static final String TRAINING_LABEL_FILE = "train-labels.idx1-ubyte";
 	
 	private int numLayers;
 	private DoubleMatrix1D[] biases; 
@@ -83,28 +92,29 @@ public class Network {
 	public void SGD(DoubleMatrix1D[][] training_data, int epochs, int mini_batch_size, double eta, DoubleMatrix1D[][] test_data) {
 		int n_test, n;
 		
-		n = training_data.length;
+		n = training_data[0].length;
 		
 		for(int epoch = 1; epoch <= epochs; epoch++) {
-			List<DoubleMatrix1D> solution = new ArrayList<>(), solution2 = new ArrayList<>();
-			for (int i = 1; i <= n; i++) {
+			List<DoubleMatrix1D> solution = new ArrayList<DoubleMatrix1D>(), solution2 = new ArrayList<DoubleMatrix1D>();
+			for (int i = 0; i < n; i++) {
 			    solution.add(i, training_data[0][i]);
-			    solution.add(i, training_data[1][i]);
+			    solution2.add(i, training_data[1][i]);
 			}
 			Collections.shuffle(solution);
 			Collections.shuffle(solution2);
 			
-			training_data[0] = (DoubleMatrix1D[]) solution.toArray();
-			training_data[1] = (DoubleMatrix1D[]) solution2.toArray();
+			for (int i = 0; i < n; i++) {
+			    training_data[0][i] = solution.get(i);
+			    training_data[1][i] = solution2.get(i);
+			}
 			
-			DoubleMatrix1D[][][] mini_batches = new DoubleMatrix1D[training_data.length / mini_batch_size][2][mini_batch_size];
+			DoubleMatrix1D[][][] mini_batches = new DoubleMatrix1D[training_data[0].length / mini_batch_size][2][mini_batch_size];
 			
 			for(int k = 0, batchNum = 0; k < n; k += mini_batch_size, batchNum++) {
 				for(int i = 0; i < mini_batch_size; i++) {
-					if(k+i < training_data.length) {
 						mini_batches[batchNum][0][i] = training_data[0][k + i];
 						mini_batches[batchNum][1][i] = training_data[1][k + i];
-					}
+						assert mini_batches[batchNum][1][i] != null : "minibatches[" + batchNum + "][1][" + i + "] is null i = " + i + " batchNum = " + batchNum + " k = " + k;
 				}
 			}
 			
@@ -113,7 +123,7 @@ public class Network {
 			}
 			
 			if(test_data != null) {
-				n_test = test_data.length;
+				n_test = test_data[0].length;
 				
 				System.out.println("Epoch " + epoch + ": " + evaluate(test_data) + " / " + n_test);
 			} else {
@@ -124,7 +134,7 @@ public class Network {
 	
 	private int evaluate(DoubleMatrix1D[][] test_data) {
 		int numCorrect = 0;
-		for(int i = 0; i < test_data.length; i++) {
+		for(int i = 0; i < test_data[0].length; i++) {
 			DoubleMatrix1D results = feedForward(test_data[0][i]);
 			if(getMax(results) == getMax(test_data[1][i])) {
 				numCorrect++;
@@ -158,8 +168,9 @@ public class Network {
 		
 		DoubleMatrix2D[][] delta_nablas;
 		
-		for(int batchNum = 0; batchNum < mini_batch.length; batchNum++) {
-			delta_nablas = backprop(mini_batch[batchNum][0], mini_batch[batchNum][1]);
+		for(int batchNum = 0; batchNum < mini_batch[0].length; batchNum++) {
+			assert mini_batch[1][batchNum] != null : "NULL mini_batch : mini_batch[1]" + batchNum; 
+			delta_nablas = backprop(mini_batch[0][batchNum], mini_batch[1][batchNum]);
 			for(int layer = 1; layer < numLayers; layer++) {
 				DoubleMatrix1D delta_nabla_b = DoubleFactory2D.dense.diagonal(delta_nablas[0][layer]);
 				nabla_b[layer].assign(delta_nabla_b, Functions.plus);
@@ -167,9 +178,9 @@ public class Network {
 			}
 		}
 		
-		for(int layer = 0; layer < numLayers; layer++) {
-			nabla_w[layer].assign(Functions.mult(eta / (double)mini_batch.length));
-			nabla_b[layer].assign(Functions.mult(eta / (double)mini_batch.length));
+		for(int layer = 1; layer < numLayers; layer++) {
+			nabla_w[layer].assign(Functions.mult(eta / (double)mini_batch[0].length));
+			nabla_b[layer].assign(Functions.mult(eta / (double)mini_batch[0].length));
 			
 			weights[layer] = weights[layer].assign(nabla_w[layer],Functions.minus);
 			biases[layer] = biases[layer].assign(nabla_b[layer], Functions.minus);
@@ -202,10 +213,10 @@ public class Network {
 		}
 		
 		//backward pass
-		DoubleMatrix1D delta = cost_derivative(activations[numLayers - 1], results).assign(zs[1].assign(sigmoidPrime), Functions.mult);
+		DoubleMatrix1D delta = cost_derivative(activations[numLayers - 1], results).assign(zs[2].assign(sigmoidPrime), Functions.mult);
 		
 		nabla_b[numLayers - 1] = delta.copy();
-		nabla_w[numLayers - 1] = matMult(delta, activations[numLayers - 1]);
+		nabla_w[numLayers - 1] = matMult(delta, activations[numLayers - 2]);
 		
 		for(int layer = numLayers - 2; layer > 0; layer--) {
 			DoubleMatrix1D z = zs[layer];
@@ -256,26 +267,26 @@ public class Network {
 		//System.out.println("Weights[1] * biases[1]");
 		//System.out.println(getWeights(1).zMult(getBiases(1), null));
 		
-<<<<<<< HEAD
 		System.out.println(feedForward(DoubleFactory1D.dense.make(3, 0.5)));
 	}
 
 	public static void main(String[] args) {
-		int[] sizes = {3, 5, 4};
-=======
-		System.out.println(getWeights(1).zMult(getBiases(1), null));
-		
-	}
-
-	public static void main(String[] args) {
-		/*int[] sizes = {10, 10, 10};
->>>>>>> df4f98cf7eec2fc61f00499d074004e3f6b4f14e
+		try {
+			System.out.println(new File(".").getCanonicalPath());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int[] sizes = {784, 30, 10};
 		Network n = new Network(sizes);
 		
-		n.testMatrices(); */
+		//n.testMatrices(); 
 		
 		DataLoader load = new DataLoader();
-		load.test();
+		DoubleMatrix1D[][] testData = load.load(TEST_LABEL_FILE, TEST_IMAGE_FILE);
+		DoubleMatrix1D[][] trainingData = load.load(DATA_PATH + TRAINING_LABEL_FILE, DATA_PATH + TRAINING_IMAGE_FILE);
+
+		n.SGD(trainingData, 5, 10, 3.0, testData);
 	}
 
 }
